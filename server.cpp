@@ -103,8 +103,8 @@ public:
     }
     virtual void OnAudioMessage(brpc::RtmpAudioMessage* msg) {
         if (msg->IsAACSequenceHeader()) {
-            LOG(INFO) << "IsAACSequenceHeader ";
-            _aacSequenceHeader = *msg;
+            LOG(INFO) << "_aac_sequence_header";
+            _aac_sequence_header = *msg;
         }       
         std::set<RtmpServerStreamImpl*>::iterator it = _players.begin();
         for (; it != _players.end(); ++it) {
@@ -114,8 +114,8 @@ public:
 
     virtual void OnVideoMessage(brpc::RtmpVideoMessage* msg) {
         if (msg->IsAVCSequenceHeader()) {
-            LOG(INFO) << "IsAVCSequenceHeader " << msg->frame_type;
-            _avcSequenceHeader = *msg;
+            LOG(INFO) << "_avc_sequence_header";
+            _avc_sequence_header = *msg;
         }
         std::set<RtmpServerStreamImpl*>::iterator it = _players.begin();
         for (; it != _players.end(); ++it) {
@@ -124,16 +124,16 @@ public:
     }
 
     virtual int SendAudioMessage(const brpc::RtmpAudioMessage& msg) {
-        if (!_sendaacHeader) {
-            _sendaacHeader = true;
+        if (!_aac_header_sended) {
+            _aac_header_sended = true;
             RtmpServerStream::SendAudioMessage(*_publisher->GetAACSequenceHeader());
         }
         return RtmpServerStream::SendAudioMessage(msg);
     }
 
     virtual int SendVideoMessage(const brpc::RtmpVideoMessage& msg) {
-        if (!_sendavcHeader) {
-            _sendavcHeader = true;
+        if (!_avc_header_sended) {
+            _avc_header_sended = true;
             RtmpServerStream::SendVideoMessage(*_publisher->GetAVCSequenceHeader());
         }
         return RtmpServerStream::SendVideoMessage(msg);
@@ -161,10 +161,10 @@ public:
 private:
     std::set<RtmpServerStreamImpl*> _players;
     RtmpServerStreamImpl* _publisher;
-    brpc::RtmpVideoMessage _avcSequenceHeader;
-    brpc::RtmpAudioMessage _aacSequenceHeader;
-    bool _sendaacHeader;
-    bool _sendavcHeader;
+    brpc::RtmpVideoMessage _avc_sequence_header;
+    brpc::RtmpAudioMessage _aac_sequence_header;
+    bool _aac_header_sended;
+    bool _avc_header_sended;
     std::string _stream_name;
     bool _is_publish;
 };
