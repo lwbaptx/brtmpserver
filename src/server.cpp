@@ -61,8 +61,8 @@ public:
     RtmpServerStreamImpl() {
         _publisher = NULL;
         _is_publish = false;
-        _sendaacHeader = false;
-        _sendavcHeader = false;
+        _aac_header_sended = false;
+        _avc_header_sended = false;
     };
     virtual ~RtmpServerStreamImpl() {
         LOG(INFO) << "~RtmpServerStreamImpl " << (_is_publish);
@@ -152,10 +152,10 @@ public:
         _publisher = NULL;
     }
     brpc::RtmpVideoMessage* GetAVCSequenceHeader() {
-        return &_avcSequenceHeader;
+        return &_avc_sequence_header;
     }
     brpc::RtmpAudioMessage* GetAACSequenceHeader() {
-        return &_aacSequenceHeader;
+        return &_aac_sequence_header;
     }
 
 private:
@@ -182,7 +182,7 @@ public:
 
 int main(int argc, char* argv[]) {
     // Parse gflags. We recommend you to use gflags as well.
-    GFLAGS_NS::ParseCommandLineFlags(&argc, &argv, true);
+    google::ParseCommandLineFlags(&argc, &argv, true);
 
     // Generally you only need one Server.
     brpc::Server server;
