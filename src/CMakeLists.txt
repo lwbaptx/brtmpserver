@@ -1,3 +1,2 @@
-INCLUDE_DIRECTORIES(/usr/local/include/brpc)
-Add_EXECUTABLE(brtmpserver server.cpp)
-TARGET_LINK_LIBRARIES(brtmpserver brpc gflags pthread)
+add_executable(brtmpserver server.cpp)
+target_link_libraries(brtmpserver brpc gflags pthread)
