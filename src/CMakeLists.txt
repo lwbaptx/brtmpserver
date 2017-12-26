@@ -1,2 +1,2 @@
-add_executable(brtmpserver server.cpp)
+add_executable(brtmpserver main.cpp rtmpservice.cpp)
 target_link_libraries(brtmpserver brpc gflags pthread)
