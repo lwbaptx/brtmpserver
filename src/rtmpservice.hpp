@@ -8,25 +8,13 @@
 #include <brpc/server.h>
 #include <brpc/rtmp.pb.h>
 #include <brpc/rtmp.h>
-#include <butil/memory/singleton_on_pthread_once.h>
 
 namespace brtmpserver {
 
-class RtmpServerStreamImpl;
-
-class RtmpStreamManager {
-public:
-    RtmpStreamManager();
-    ~RtmpStreamManager();
-    void AddPublisher(const std::string& stream_name, RtmpServerStreamImpl* publisher);
-    void DelPublisher(const std::string& stream_name);
-    RtmpServerStreamImpl* FindPublisher(const std::string& stream_name);
-
-private:
-    std::map<std::string, RtmpServerStreamImpl*> _streams;
-};
-
 class RtmpServerStreamImpl : public brpc::RtmpServerStream {
+public:
+    typedef std::map<std::string, RtmpServerStreamImpl*> PublishersMapType;
+
 public:
     RtmpServerStreamImpl();
     virtual ~RtmpServerStreamImpl();
@@ -42,6 +30,7 @@ public:
     virtual int SendAudioMessage(const brpc::RtmpAudioMessage& msg);
     virtual int SendVideoMessage(const brpc::RtmpVideoMessage& msg);
 
+
 private:
     std::set<RtmpServerStreamImpl*> _players;
     RtmpServerStreamImpl* _publisher;
@@ -51,6 +40,7 @@ private:
     bool _avc_header_sended;
     std::string _stream_name;
     bool _is_publish;
+    static PublishersMapType _publishers;
 };
 
 class RtmpServiceImpl : public brpc::RtmpService {

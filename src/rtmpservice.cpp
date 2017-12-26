@@ -2,31 +2,7 @@
 
 namespace brtmpserver {
 
-RtmpStreamManager::RtmpStreamManager() {
-
-}
-
-RtmpStreamManager::~RtmpStreamManager() {
-
-}
-
-void RtmpStreamManager::AddPublisher(const std::string &stream_name, RtmpServerStreamImpl *publisher) {
-    _streams[stream_name] = publisher;
-}
-
-void RtmpStreamManager::DelPublisher(const std::string &stream_name) {
-    std::map<std::string, RtmpServerStreamImpl *>::iterator it = _streams.find(stream_name);
-    if (it != _streams.end()) {
-        _streams.erase(it);
-    }
-}
-
-RtmpServerStreamImpl *RtmpStreamManager::FindPublisher(const std::string &stream_name) {
-    std::map<std::string, RtmpServerStreamImpl *>::iterator it = _streams.find(stream_name);
-    if (it != _streams.end())
-        return it->second;
-    return NULL;
-}
+RtmpServerStreamImpl::PublishersMapType RtmpServerStreamImpl::_publishers;
 
 RtmpServerStreamImpl::RtmpServerStreamImpl() {
     _publisher = NULL;
@@ -40,12 +16,13 @@ RtmpServerStreamImpl::~RtmpServerStreamImpl() {
     if (_publisher) {
         _publisher->_players.erase(this);
     }
-
     if (_is_publish) {
-        butil::get_leaky_singleton<RtmpStreamManager>()->DelPublisher(_stream_name);
-        std::set<RtmpServerStreamImpl *>::iterator it = _players.begin();
-        for (; it != _players.end(); ++it) {
-            (*it)->_publisher = NULL;
+        PublishersMapType::iterator itPublisher = _publishers.find(_stream_name);
+        if (itPublisher != _publishers.end())
+            _publishers.erase(itPublisher);
+        std::set<RtmpServerStreamImpl *>::iterator itPlayer = _players.begin();
+        for (; itPlayer != _players.end(); ++itPlayer) {
+            (*itPlayer)->_publisher = NULL;
         }
         _players.clear();
     }
@@ -57,9 +34,9 @@ void RtmpServerStreamImpl::OnPlay(const brpc::RtmpPlayOptions &options,
     brpc::ClosureGuard done_guard(done);
     LOG(INFO) << "OnPlay " << options.stream_name;
     _stream_name = options.stream_name;
-    RtmpServerStreamImpl *publisher = butil::get_leaky_singleton<RtmpStreamManager>()->FindPublisher(options.stream_name);
-    if (publisher) {
-        _publisher = publisher;
+    PublishersMapType::iterator itPublisher = _publishers.find(options.stream_name);
+    if (itPublisher != _publishers.end()) {
+        _publisher = itPublisher->second;
         _publisher->_players.insert(this);
     }
 }
@@ -72,7 +49,11 @@ void RtmpServerStreamImpl::OnPublish(const std::string &stream_name,
     LOG(INFO) << "OnPublish " << stream_name;
     _stream_name = stream_name;
     _is_publish = true;
-    butil::get_leaky_singleton<RtmpStreamManager>()->AddPublisher(stream_name, this);
+    PublishersMapType::iterator itPublisher = _publishers.find(_stream_name);
+    if (itPublisher != _publishers.end()) {
+        delete itPublisher->second;
+    }
+    _publishers[stream_name] = this;
 }
 
 void RtmpServerStreamImpl::OnAudioMessage(brpc::RtmpAudioMessage *msg) {
